@@ -158,15 +158,16 @@ donmani/
 
 ## Git · GitHub · 브랜치 전략
 
-원격은 **GitHub**. 브랜치 모델은 1인 개발 + Jenkins CI에 맞춘 **GitHub Flow + 릴리스 태그**를 사용한다.
+원격은 **GitHub** (`git@github.com:xngsoo/donmani.git`). 브랜치 모델은 1인 개발 + Jenkins CI에 맞춘 **dev 통합 브랜치 + 릴리스 태그**를 사용한다.
 
 ### 브랜치 규칙
 
 - `main` — 항상 **릴리스 가능한** 상태. 직접 커밋 금지, **PR로만 병합**. App Store 릴리스는 여기서 `vX.Y.Z` 태그로 끊는다.
-- 작업 브랜치는 `main`에서 분기해 **짧게** 유지하고 PR로 되돌린다:
+- `dev` — **기본 브랜치이자 통합 브랜치**. 모든 작업 브랜치는 여기서 분기하고 **여기로 PR**을 연다. 릴리스 시점에 `dev` → `main` PR로 올린다.
+- 작업 브랜치는 `dev`에서 분기해 **짧게** 유지하고 `dev`로 PR을 되돌린다:
   - `feature/<설명>` — 기능
   - `fix/<설명>` — 버그 수정
-  - `hotfix/<설명>` — 출시본 긴급 수정(필요 시 릴리스 태그에서 분기)
+  - `hotfix/<설명>` — 출시본 긴급 수정(`main` 또는 릴리스 태그에서 분기해 `main`으로 PR, 이후 `dev`에 반영)
   - `refactor/` · `chore/` · `docs/` · `ci/` — 보조 작업
 - PR은 작게, 하나의 목적. 머지 전 **CI(테스트) 통과 필수**. 히스토리 선형을 위해 **Squash merge** 권장.
 
@@ -176,24 +177,20 @@ donmani/
 
 ### 브랜치 → Jenkins 트리거 매핑
 
-- PR 열림/갱신 → `fastlane test` (머지 게이트)
+- PR 열림/갱신 (`dev`·`main` 대상) → `fastlane test` (머지 게이트)
+- `dev` 병합 → `fastlane test` (통합 확인)
 - `main` 병합 → `fastlane beta` (TestFlight 자동 배포)
 - `v*` 태그 push → `fastlane release` (App Store 제출)
 
 > **미정 — Jenkins ↔ GitHub 연동 방식.** PR·브랜치·태그 이벤트를 Jenkins가 어떻게 받을지 아직 정하지 않았다(후보: multibranch pipeline + GitHub webhook / GitHub Branch Source 플러그인 / SCM 폴링 등). 연동을 실제로 구성하는 단계(`Jenkinsfile`, webhook, 자격증명 설정)에 오면, **진행하기 전에 어떤 방식을 쓸지 사용자에게 먼저 질문한다.** 확정 전에는 위 트리거 매핑을 목표 동작으로만 참고한다.
 
-### GitHub 연결 (최초 1회)
+### GitHub 설정 현황 (완료됨)
 
-```bash
-git init
-git branch -M main
-git remote add origin git@github.com:<계정>/donmani.git
-git add .
-git commit -m "chore: initial Tuist project scaffold"
-git push -u origin main
-```
-
-- GitHub → Settings → Branches에서 `main` 보호 규칙 설정: **PR 필수 + 상태 체크(Jenkins) 통과 필수**, force-push·삭제 금지.
+- 원격 `origin` = `git@github.com:xngsoo/donmani.git`, 기본 브랜치 = `dev`.
+- `main` 보호 규칙 적용: **PR 필수**(승인 0건 — 1인 개발), 선형 히스토리 필수, 대화 해결 필수, force-push·삭제 금지.
+- 상태 체크(Jenkins) 필수 조건은 **아직 비어 있다.** Jenkins 연동 후 체크 이름을 등록해야 머지 게이트가 실제로 동작한다.
+- `enforce_admins`는 꺼져 있어 소유자는 긴급 시 우회할 수 있다. 잠그려면
+  `gh api -X PUT repos/xngsoo/donmani/branches/main/protection/enforce_admins`.
 
 ### .gitignore 필수 항목 (Tuist / Xcode / Fastlane)
 
@@ -231,7 +228,7 @@ CLAUDE.local.md
 
 ### 에이전트(Claude Code) git 규칙
 
-- 작업 시작 시 `main`을 최신화하고 새 작업 브랜치를 만든다. **`main`에 직접 커밋/푸시하지 않는다.**
+- 작업 시작 시 `dev`를 최신화하고 거기서 새 작업 브랜치를 만든다. PR의 base는 `dev`다. **`main`·`dev`에 직접 커밋/푸시하지 않는다.**
 - 커밋은 논리 단위로 나누고 Conventional Commits 형식을 지킨다.
 - **커밋 메시지·PR 본문에 Claude가 작성했다는 표시를 남기지 않는다.** `Co-Authored-By: Claude ...`, `🤖 Generated with Claude Code` 같은 서명·푸터를 붙이지 않는다.
 - **원격에 영향을 주거나 되돌리기 어려운 작업은 실행 전 사용자에게 확인받는다**: `git push`, PR 생성/머지, `git push --force`, 브랜치/태그 삭제, 태그 push, 공유 브랜치의 히스토리 재작성(`rebase`/`reset --hard`). 로컬 브랜치·커밋 생성은 확인 없이 진행 가능.
