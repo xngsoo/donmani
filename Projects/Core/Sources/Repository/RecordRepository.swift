@@ -11,8 +11,10 @@ public enum RecordRepositoryError: Error, Equatable {
 public protocol RecordRepository: AnyObject {
     func fetchAll() throws -> [MoneyRecord]
     func fetch(in dateInterval: DateInterval) throws -> [MoneyRecord]
+    func record(with id: PersistentIdentifier) throws -> MoneyRecord?
     @discardableResult
     func add(amount: Int, category: RecordCategory, memo: String, spentAt: Date) throws -> MoneyRecord
+    func update(_ record: MoneyRecord, amount: Int, category: RecordCategory, memo: String, spentAt: Date) throws
     func delete(_ record: MoneyRecord) throws
 }
 
@@ -65,6 +67,26 @@ public final class SwiftDataRecordRepository: RecordRepository {
         context.insert(record)
         try save()
         return record
+    }
+
+    public func record(with id: PersistentIdentifier) throws -> MoneyRecord? {
+        context.registeredModel(for: id) ?? context.model(for: id) as? MoneyRecord
+    }
+
+    public func update(
+        _ record: MoneyRecord,
+        amount: Int,
+        category: RecordCategory,
+        memo: String,
+        spentAt: Date
+    ) throws {
+        guard amount > 0 else { throw RecordRepositoryError.invalidAmount(amount) }
+
+        record.amount = amount
+        record.category = category
+        record.memo = memo
+        record.spentAt = spentAt
+        try save()
     }
 
     public func delete(_ record: MoneyRecord) throws {

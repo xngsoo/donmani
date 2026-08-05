@@ -1,4 +1,4 @@
 import ProjectDescription
 import ProjectDescriptionHelpers
 
-let project = Project.module(name: "UI", hasTests: false)
+let project = Project.module(name: "UI")
