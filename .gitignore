@@ -1,0 +1,25 @@
+# macOS / Xcode
+.DS_Store
+xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# Tuist 생성물 (프로젝트/워크스페이스는 생성물이므로 커밋하지 않음)
+*.xcodeproj
+*.xcworkspace
+Derived/
+.tuist-cache/
+
+# SPM
+.build/
+.swiftpm/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+
+# Claude Code — 개인/로컬 파일만 무시 (공유 파일은 커밋)
+.claude/settings.local.json
+.claude/*.local.json
+CLAUDE.local.md
