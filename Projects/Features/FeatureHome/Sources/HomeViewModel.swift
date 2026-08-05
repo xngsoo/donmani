@@ -78,6 +78,16 @@ public final class HomeViewModel {
         }
     }
 
+    /// 가로 스와이프를 월 이동량으로 바꾼다. 세로가 더 크거나 이동이 짧으면 무시한다.
+    public nonisolated static func monthStep(
+        horizontal: CGFloat,
+        vertical: CGFloat,
+        threshold: CGFloat
+    ) -> Int? {
+        guard abs(horizontal) > abs(vertical), abs(horizontal) > threshold else { return nil }
+        return horizontal < 0 ? 1 : -1
+    }
+
     public func moveMonth(by value: Int) {
         guard let moved = calendar.date(byAdding: .month, value: value, to: anchor) else { return }
         anchor = moved

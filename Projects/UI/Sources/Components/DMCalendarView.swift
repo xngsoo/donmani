@@ -48,13 +48,15 @@ public struct DMCalendarView: View {
                 }
             }
 
+            // 부모가 남는 세로 공간을 주면 주 단위로 고르게 나눠 갖는다.
             ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
                 HStack(spacing: 0) {
                     ForEach(week) { day in
                         cell(for: day)
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
+                .frame(maxHeight: .infinity)
             }
         }
     }
