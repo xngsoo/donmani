@@ -150,6 +150,27 @@ struct HomeViewModelTests {
         #expect(viewModel.selectedDay?.date == calendar.startOfDay(for: date(calendar, 2026, 8, 5)))
     }
 
+    @Test(
+        "가로 스와이프만 월 이동으로 해석한다",
+        arguments: [
+            (-80.0, 10.0, 1),
+            (80.0, -10.0, -1),
+            (30.0, 0.0, nil),
+            (-30.0, 0.0, nil),
+            (60.0, 90.0, nil),
+            (0.0, 200.0, nil),
+        ] as [(Double, Double, Int?)]
+    )
+    func swipeIsInterpretedAsMonthStep(horizontal: Double, vertical: Double, expected: Int?) {
+        let step = HomeViewModel.monthStep(
+            horizontal: horizontal,
+            vertical: vertical,
+            threshold: 50
+        )
+
+        #expect(step == expected)
+    }
+
     @Test("조회 실패는 사용자용 메시지가 담긴 failed 상태가 된다")
     func loadFailure() {
         let repository = StubRecordRepository()
