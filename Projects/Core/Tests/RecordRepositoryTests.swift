@@ -60,6 +60,42 @@ struct RecordRepositoryTests {
         #expect(records.map(\.memo) == ["경계-시작"])
     }
 
+    @Test("수정한 값이 저장된다")
+    func updatePersistsNewValues() throws {
+        let repository = try makeRepository()
+        let record = try repository.add(amount: 5_000, category: .food, memo: "점심", spentAt: .now)
+        let newDate = Date(timeIntervalSince1970: 1_700_000_000)
+
+        try repository.update(record, amount: 7_500, category: .culture, memo: "영화", spentAt: newDate)
+
+        let stored = try #require(try repository.fetchAll().first)
+        #expect(stored.amount == 7_500)
+        #expect(stored.category == .culture)
+        #expect(stored.memo == "영화")
+        #expect(stored.spentAt == newDate)
+    }
+
+    @Test("0 이하 금액으로는 수정되지 않는다")
+    func updateRejectsNonPositiveAmount() throws {
+        let repository = try makeRepository()
+        let record = try repository.add(amount: 5_000, category: .food, memo: "점심", spentAt: .now)
+
+        #expect(throws: RecordRepositoryError.invalidAmount(0)) {
+            try repository.update(record, amount: 0, category: .food, memo: "점심", spentAt: .now)
+        }
+        #expect(try repository.fetchAll().first?.amount == 5_000)
+    }
+
+    @Test("식별자로 기록을 다시 찾을 수 있다")
+    func lookupByIdentifier() throws {
+        let repository = try makeRepository()
+        let record = try repository.add(amount: 4_200, category: .transport, memo: "택시", spentAt: .now)
+
+        let found = try repository.record(with: record.persistentModelID)
+
+        #expect(found?.amount == 4_200)
+    }
+
     @Test("삭제한 기록은 조회되지 않는다")
     func deleteRemovesRecord() throws {
         let repository = try makeRepository()
